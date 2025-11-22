@@ -15,6 +15,7 @@ import bcrypt from "bcrypt";
 import { Integration } from "./integration.entity";
 import { Event } from "./event.entity";
 import { Availability } from "./availability.entity";
+import { Meeting } from "./meeting.entity";
 
 @Entity({ name: "users" })
 export class User {
@@ -52,6 +53,11 @@ export class User {
   })
   @JoinColumn()
   availability: Availability;
+
+  @OneToMany(() => Meeting, (meeting) => meeting.user, {
+    cascade: true,
+  })
+  meetings: Meeting[];
   // ======== TABLE RELATIONSHIPS ========
 
   @CreateDateColumn()
