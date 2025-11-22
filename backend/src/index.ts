@@ -7,6 +7,7 @@ import { errorHandler } from "./middlewares/errorHandler.middleware";
 import { asyncHandler } from "./middlewares/asyncHandler.middleware";
 import { initializeDatabase } from "./database/database";
 import authRoutes from "./routes/auth.route";
+import passport from "passport";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -19,6 +20,8 @@ app.use(
     credentials: true,
   }),
 );
+
+app.use(passport.initialize());
 
 app.get(
   "/",

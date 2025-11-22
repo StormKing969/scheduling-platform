@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { HttpStatus } from "../config/http.config";
-import { RegisterDto } from "../database/dto/auth.dto";
+import { LoginDto, RegisterDto } from "../database/dto/auth.dto";
 import { asyncHandlerWithValidation } from "../middlewares/withValidation.middleware";
-import { registerService } from "../services/auth.service";
+import { loginService, registerService } from "../services/auth.service";
 
 export const registerController = asyncHandlerWithValidation(
   RegisterDto,
@@ -13,6 +13,21 @@ export const registerController = asyncHandlerWithValidation(
     return res.status(HttpStatus.CREATED).json({
       message: "User created successfully",
       user,
+    });
+  },
+);
+
+export const loginController = asyncHandlerWithValidation(
+  LoginDto,
+  "body",
+  async (req: Request, res: Response, loginDto: LoginDto) => {
+    const { user, accessToken, expiresAt } = await loginService(loginDto);
+
+    return res.status(HttpStatus.CREATED).json({
+      message: "User logged in successfully",
+      user,
+      accessToken,
+      expiresAt,
     });
   },
 );
