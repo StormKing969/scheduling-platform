@@ -3,6 +3,8 @@ import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import { config } from "./config/app.config";
 import { HttpStatus } from "./config/http.config";
+import { errorHandler } from "./middlewares/errorHandler.middleware";
+import { asyncHandler } from "./middlewares/asyncHandler.middleware";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -16,11 +18,16 @@ app.use(
   }),
 );
 
-app.get("/", async (req: Request, res: Response, next: NextFunction) => {
-  res.status(HttpStatus.OK).json({
-    message: "Welcome",
-  });
-});
+app.get(
+  "/",
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    res.status(HttpStatus.OK).json({
+      message: "Welcome",
+    });
+  }),
+);
+
+app.use(errorHandler);
 
 app.listen(config.PORT, async () => {
   console.log(
