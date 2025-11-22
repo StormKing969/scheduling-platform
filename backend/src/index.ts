@@ -5,6 +5,7 @@ import { config } from "./config/app.config";
 import { HttpStatus } from "./config/http.config";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
 import { asyncHandler } from "./middlewares/asyncHandler.middleware";
+import { initializeDatabase } from "./database/database";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -30,6 +31,7 @@ app.get(
 app.use(errorHandler);
 
 app.listen(config.PORT, async () => {
+  await initializeDatabase();
   console.log(
     `Server is listening on port ${config.PORT} in ${config.NODE_ENV}`,
   );
