@@ -3,8 +3,17 @@ import { plainToInstance } from "class-transformer";
 import { validate, ValidationError } from "class-validator";
 import { HttpStatus } from "../config/http.config";
 import { ErrorCodeEnum } from "../enums/error-code.enum";
+import { asyncHandler } from "./asyncHandler.middleware";
 
-export type ValidationSource = "body" | "params" | "query";
+type ValidationSource = "body" | "params" | "query";
+
+export function asyncHandlerWithValidation<T extends object>(
+  dto: new () => T,
+  source: ValidationSource = "body",
+  handler: (req: Request, res: Response, dto: T) => Promise<any>,
+) {
+  return asyncHandler(withValidation(dto, source)(handler));
+}
 
 function formatValidationError(res: Response, errors: ValidationError[]) {
   return res.status(HttpStatus.BAD_REQUEST).json({
