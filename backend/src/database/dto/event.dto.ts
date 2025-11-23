@@ -32,13 +32,13 @@ export class EventIdDto {
   eventId: string;
 }
 
-export class UserNameDto {
+export class UsernameDto {
   @IsString()
   @IsNotEmpty()
   username: string;
 }
 
-export class UserNameAndSlugDto {
+export class UsernameAndSlugDto {
   @IsString()
   @IsNotEmpty()
   username: string;

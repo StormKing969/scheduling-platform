@@ -22,7 +22,9 @@ export class Availability {
   @OneToOne(() => User, (user) => user.availability)
   user: User;
 
-  @OneToMany(() => DayAvailability, (days) => days.availability)
+  @OneToMany(() => DayAvailability, (days) => days.availability, {
+    cascade: true,
+  })
   days: DayAvailability[];
   // ======== TABLE RELATIONSHIPS ========
 

@@ -66,3 +66,73 @@ export const toggleEventPrivacyService = async (
 
   return event;
 };
+
+export const getPublicEventsByUsernameService = async (username: string) => {
+  const userRepository = AppDataSource.getRepository(User);
+  const user = await userRepository
+    .createQueryBuilder("user")
+    .leftJoinAndSelect("user.events", "event", "event.isPrivate = :isPrivate", {
+      isPrivate: false,
+    })
+    .where("user.username = :username", { username })
+    .select(["user.id", "user.name", "user.imageUrl"])
+    .addSelect([
+      "event.id",
+      "event.title",
+      "event.description",
+      "event.slug",
+      "event.duration",
+      "event.locationType",
+    ])
+    .orderBy("event.createdAt", "DESC")
+    .getOne();
+  if (!user) {
+    throw new NotFoundException("User not found");
+  }
+
+  return {
+    user: {
+      name: user.name,
+      username: username,
+      imageUrl: user.imageUrl,
+    },
+    events: user.events,
+  };
+};
+
+export const getPublicEventByUsernameAndSlugService = async (
+  username: string,
+  slug: string,
+) => {
+  const eventRepository = AppDataSource.getRepository(Event);
+  return await eventRepository
+    .createQueryBuilder("event")
+    .leftJoinAndSelect("event.user", "user")
+    .where("user.username = :username", { username })
+    .andWhere("event.slug = :slug", { slug })
+    .andWhere("event.isPrivate = :isPrivate", { isPrivate: false })
+    .select([
+      "event.id",
+      "event.title",
+      "event.description",
+      "event.slug",
+      "event.duration",
+      "event.locationType",
+    ])
+    .addSelect(["user.id", "user.name", "user.imageUrl"])
+    .getOne();
+};
+
+export const deleteEventService = async (userId: string, eventId: string) => {
+  const eventRepository = AppDataSource.getRepository(Event);
+  const event = await eventRepository.findOne({
+    where: { id: eventId, user: { id: userId } },
+  });
+  if (!event) {
+    throw new NotFoundException("Event not found");
+  }
+
+  await eventRepository.remove(event);
+
+  return { success: true };
+};
