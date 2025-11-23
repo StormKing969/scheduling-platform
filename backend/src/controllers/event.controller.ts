@@ -54,7 +54,7 @@ export const toggleEventPrivacyController = asyncHandlerWithValidation(
     const event = await toggleEventPrivacyService(userId, eventIdDto.eventId);
 
     return res.status(HttpStatus.OK).json({
-      message: `Event was successfully set to ${event.isPrivate ? "Private" : "Public"}`,
+      message: `Event was successfully set to ${event.isPrivate ? "private" : "public"}`,
     });
   },
 );
