@@ -1,14 +1,15 @@
 import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    ManyToOne, OneToMany,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from "typeorm";
 import { IntegrationAppTypeEnum } from "./integration.entity";
 import { User } from "./user.entity";
-import {Meeting} from "./meeting.entity";
+import { Meeting } from "./meeting.entity";
 
 export enum EventLocationEnumType {
   GOOGLE_MEET_AND_CALENDAR = IntegrationAppTypeEnum.GOOGLE_MEET_AND_CALENDAR,
@@ -25,6 +26,9 @@ export class Event {
 
   @Column({ nullable: true })
   description: string;
+
+  @Column({ default: 30 })
+  duration: number;
 
   @Column({ nullable: false })
   slug: string;
