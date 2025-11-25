@@ -12,6 +12,7 @@ import { User } from "./user.entity";
 export enum IntegrationProviderEnum {
   GOOGLE = "GOOGLE",
   ZOOM = "ZOOM",
+  MICROSOFT = "MICROSOFT",
 }
 
 export enum IntegrationAppTypeEnum {
