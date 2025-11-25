@@ -7,6 +7,71 @@ import { DayOfWeekEnum } from "../database/entities/day-availability.entity";
 import { Event } from "../database/entities/event.entity";
 import { addDays, addMinutes, format, parseISO } from "date-fns";
 
+function getNextDateForDay(dayOfWeek: string): Date {
+  const days = [
+    "SUNDAY",
+    "MONDAY",
+    "TUESDAY",
+    "WEDNESDAY",
+    "THURSDAY",
+    "FRIDAY",
+    "SATURDAY",
+  ];
+
+  const today = new Date();
+  const todayDay = today.getDay();
+  const targetDay = days.indexOf(dayOfWeek);
+  const daysUntilTarget = (targetDay - todayDay + 7) % 7;
+
+  return addDays(today, daysUntilTarget);
+}
+
+function generateAvailableTimeSlots(
+  startTime: Date,
+  endTime: Date,
+  duration: number,
+  meetings: { startTime: Date; endTime: Date }[],
+  dateStr: string,
+  timeGap: number = 30,
+) {
+  const slots = [];
+
+  let slotStartTime = parseISO(
+    `${dateStr}T${startTime.toISOString().slice(11, 16)}`,
+  );
+  let slotEndTime = parseISO(
+    `${dateStr}T${endTime.toISOString().slice(11, 16)}`,
+  );
+  const now = new Date();
+  const isToday = format(now, "yyyy-MM-dd") === dateStr;
+  while (slotStartTime < slotEndTime) {
+    if (!isToday || slotStartTime >= now) {
+      const slotEnd = new Date(slotStartTime.getTime() + duration * 60000);
+      if (isSlotAvailable(slotStartTime, slotEnd, meetings)) {
+        slots.push(format(slotStartTime, "HH:mm"));
+      }
+    }
+
+    slotStartTime = addMinutes(slotStartTime, timeGap);
+  }
+
+  return slots;
+}
+
+function isSlotAvailable(
+  slotStart: Date,
+  slotEnd: Date,
+  meetings: { startTime: Date; endTime: Date }[],
+): boolean {
+  for (const meeting of meetings) {
+    if (slotStart < meeting.endTime && slotEnd > meeting.startTime) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export const getUserAvailabilityService = async (userId: string) => {
   const userRepository = AppDataSource.getRepository(User);
   const user = await userRepository.findOne({
@@ -114,68 +179,3 @@ export const getAvailabilityForPublicEventService = async (eventId: string) => {
 
   return availableDays;
 };
-
-function getNextDateForDay(dayOfWeek: string): Date {
-  const days = [
-    "SUNDAY",
-    "MONDAY",
-    "TUESDAY",
-    "WEDNESDAY",
-    "THURSDAY",
-    "FRIDAY",
-    "SATURDAY",
-  ];
-
-  const today = new Date();
-  const todayDay = today.getDay();
-  const targetDay = days.indexOf(dayOfWeek);
-  const daysUntilTarget = (targetDay - todayDay + 7) % 7;
-
-  return addDays(today, daysUntilTarget);
-}
-
-function generateAvailableTimeSlots(
-  startTime: Date,
-  endTime: Date,
-  duration: number,
-  meetings: { startTime: Date; endTime: Date }[],
-  dateStr: string,
-  timeGap: number = 30,
-) {
-  const slots = [];
-
-  let slotStartTime = parseISO(
-    `${dateStr}T${startTime.toISOString().slice(11, 16)}`,
-  );
-  let slotEndTime = parseISO(
-    `${dateStr}T${endTime.toISOString().slice(11, 16)}`,
-  );
-  const now = new Date();
-  const isToday = format(now, "yyyy-MM-dd") === dateStr;
-  while (slotStartTime < slotEndTime) {
-    if (!isToday || slotStartTime >= now) {
-      const slotEnd = new Date(slotStartTime.getTime() + duration * 60000);
-      if (isSlotAvailable(slotStartTime, slotEnd, meetings)) {
-        slots.push(format(slotStartTime, "HH:mm"));
-      }
-    }
-
-    slotStartTime = addMinutes(slotStartTime, timeGap);
-  }
-
-  return slots;
-}
-
-function isSlotAvailable(
-  slotStart: Date,
-  slotEnd: Date,
-  meetings: { startTime: Date; endTime: Date }[],
-): boolean {
-  for (const meeting of meetings) {
-    if (slotStart < meeting.endTime && slotEnd > meeting.startTime) {
-      return false;
-    }
-  }
-
-  return true;
-}
