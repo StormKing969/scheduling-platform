@@ -63,7 +63,6 @@ export const checkIntegrationService = async (
   appType: IntegrationAppTypeEnum,
 ) => {
   const integrationRepository = AppDataSource.getRepository(Integration);
-
   const integration = await integrationRepository.findOne({
     where: { user: { id: userId }, app_type: appType },
   });
@@ -95,4 +94,57 @@ export const connectAppService = async (
   }
 
   return { url: authUrl };
+};
+
+export const createIntegrationService = async (data: {
+  userId: string;
+  provider: IntegrationProviderEnum;
+  category: IntegrationCategoryEnum;
+  app_type: IntegrationAppTypeEnum;
+  access_token: string;
+  refresh_token: string | undefined;
+  expiry_date: number | null;
+  metadata: any;
+}) => {
+  const integrationRepository = AppDataSource.getRepository(Integration);
+  const existingIntegration = await integrationRepository.findOne({
+    where: { userId: data.userId, app_type: data.app_type },
+  });
+  if (existingIntegration) {
+    throw new BadRequestException(
+      `Integration for ${data.app_type} already exists`,
+    );
+  }
+
+  const integration = integrationRepository.create({
+    provider: data.provider,
+    category: data.category,
+    app_type: data.app_type,
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+    expiration_date: data.expiry_date,
+    metadata: data.metadata,
+    isConnected: true,
+    userId: data.userId,
+  });
+  await integrationRepository.save(integration);
+
+  return integration;
+};
+
+export const validateGoogleToken = async (
+  access_token: string,
+  refresh_token: string,
+  expiry_date: number | null,
+) => {
+  if (expiry_date === null || Date.now() >= expiry_date) {
+    googleOAuth2Client.setCredentials({
+      refresh_token: refresh_token,
+    });
+    const { credentials } = await googleOAuth2Client.refreshAccessToken();
+
+    return credentials.access_token;
+  }
+
+  return access_token;
 };

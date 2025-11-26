@@ -4,6 +4,7 @@ import {
   checkIntegrationController,
   connectAppController,
   getUserIntegrationsController,
+  googleOAuthCallbackController,
 } from "../controllers/integration.controller";
 
 const integrationRoutes = Router();
@@ -23,5 +24,6 @@ integrationRoutes.get(
   passportAuthenticateJwt,
   connectAppController,
 );
+integrationRoutes.get("/google/callback", googleOAuthCallbackController);
 
 export default integrationRoutes;

@@ -2,12 +2,22 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../middlewares/asyncHandler.middleware";
 import { HttpStatus } from "../config/http.config";
 import {
-  checkIntegrationService,
-  connectAppService,
-  getUserIntegrationsService,
+    checkIntegrationService,
+    connectAppService, createIntegrationService,
+    getUserIntegrationsService,
 } from "../services/integration.service";
 import { asyncHandlerWithValidation } from "../middlewares/withValidation.middleware";
 import { AppTypeDtO } from "../database/dto/integration.dto";
+import { config } from "../config/app.config";
+import { decodeState } from "../utils/helper";
+import { googleOAuth2Client } from "../config/oauth.config";
+import {
+  IntegrationAppTypeEnum,
+  IntegrationCategoryEnum,
+  IntegrationProviderEnum,
+} from "../database/entities/integration.entity";
+
+const CLIENT_APP_URL = config.FRONTEND_INTEGRATION_URL;
 
 export const getUserIntegrationsController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -49,5 +59,45 @@ export const connectAppController = asyncHandlerWithValidation(
       message: `Integration for ${appTypeDto.appType} completed`,
       url,
     });
+  },
+);
+
+export const googleOAuthCallbackController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { code, state } = req.query;
+    const CLIENT_URL = `${CLIENT_APP_URL}?app_type=google`;
+    if (!code || typeof code !== "string") {
+      return res.redirect(`${CLIENT_URL}&error=Invalid authorization`);
+    }
+
+    if (!state || typeof state !== "string") {
+      return res.redirect(`${CLIENT_URL}&error=Invalid state parameter`);
+    }
+
+    const { userId } = decodeState(state);
+    if (!userId) {
+      return res.redirect(`${CLIENT_URL}&error=UserId is required`);
+    }
+
+    const { tokens } = await googleOAuth2Client.getToken(code);
+    if (!tokens.access_token) {
+      return res.redirect(`${CLIENT_URL}&error=Access Token not passed`);
+    }
+
+    await createIntegrationService({
+      userId: userId,
+      provider: IntegrationProviderEnum.GOOGLE,
+      category: IntegrationCategoryEnum.CALENDAR_AND_VIDEO_CONFERENCE,
+      app_type: IntegrationAppTypeEnum.GOOGLE_MEET_AND_CALENDAR,
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token || undefined,
+      expiry_date: tokens.expiry_date || null,
+      metadata: {
+        scope: tokens.scope,
+        token_type: tokens.token_type,
+      },
+    });
+
+    return res.redirect(`${CLIENT_URL}&success=true`);
   },
 );
